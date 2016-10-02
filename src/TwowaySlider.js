@@ -3,6 +3,7 @@ import style from './style.css';
 import { Observable } from 'rx';
 import SliderManager from './SliderManager.js';
 import BarManager from './BarManager.js';
+import { debunce } from './Utils';
 
 export default class TwowaySlider extends React.Component {
 
