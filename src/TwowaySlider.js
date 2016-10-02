@@ -2,6 +2,7 @@ import React from 'react';
 import style from './style.css';
 import { Observable } from 'rx';
 import SliderManager from './SliderManager.js';
+import BarManager from './BarManager.js';
 
 export default class TwowaySlider extends React.Component {
 
@@ -28,10 +29,18 @@ export default class TwowaySlider extends React.Component {
   }
 
   handleSliderDrag() {
-    const {leftToggle, rightToggle, mainSlider } = this.refs;
+    const {
+      leftToggle,
+      rightToggle,
+      minBar,
+      maxBar,
+      mainSlider
+    } = this.refs;
 
     const leftTracker  = new SliderManager(leftToggle, mainSlider);
     const rightTracker = new SliderManager(rightToggle, mainSlider);
+    const minBarTracker = new BarManager(minBar, mainSlider);
+    const maxBarTracker = new BarManager(maxBar, mainSlider);
 
     const windowMousemove$ = Observable.fromEvent(window, 'mousemove');
     const sliderClick$     = Observable.fromEvent(mainSlider, 'click');
@@ -50,10 +59,16 @@ export default class TwowaySlider extends React.Component {
         const { isSliding, curDirection } = this.state;
         if(isSliding && curDirection === 'left') {
           const offsetX = leftTracker.getOffset(pageX);
+          const parition = minBarTracker.getPartition(pageX);
+
           requestAnimationFrame(leftTracker.slide(offsetX, 'left'));
+          requestAnimationFrame(minBarTracker.slide(parition));
         } else if(isSliding && curDirection === 'right') {
           const offsetX = rightTracker.getOffset(pageX);
+          const parition = maxBarTracker.getPartition(pageX);
+
           requestAnimationFrame(rightTracker.slide(offsetX, 'right'));
+          requestAnimationFrame(maxBarTracker.slide(parition));
         }
       });
   }
