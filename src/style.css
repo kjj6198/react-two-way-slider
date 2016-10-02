@@ -17,7 +17,7 @@
   position: absolute;
   z-index: var(--mainLayer);
   width: 100%;
-  background-color: var(--sliderColor);
+  background-color: #aaa;
 
 }
 
@@ -28,8 +28,15 @@
   z-index: var(--barLayer);
   top: 50%;
   width: 0;
+}
 
+.slider__minBar {
   background-color: #aaa;
+}
+.slider__maxBar {
+  width: 100%;
+  z-index: 1;
+  background-color: #27cc95;
 }
 
 

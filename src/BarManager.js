@@ -10,9 +10,14 @@ export default class BarManager {
     let barWidth = pointX - barRect.left;
 
     if(direction === 'right') {
-
+      let barWidth = this.container.getBoundingClientRect().right
     }
 
+    if(barWidth / containerWidth < 0) {
+      return 0;
+    } else if (barWidth / containerWidth >= 1) {
+      return 1;
+    }
 
     return barWidth / containerWidth;
   }

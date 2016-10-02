@@ -76,7 +76,7 @@ export default class TwowaySlider extends React.Component {
   handleSlideState() {
     let { isSliding } = this.state;
 
-    const { mainSlider, leftToggle, rightToggle } = this.refs;
+    const { mainSlider, minBar, maxBar, leftToggle, rightToggle } = this.refs;
     const toggleSliding = (state, direction) => () => {
       this.setState({isSliding: state});
       isSliding = state;
@@ -94,6 +94,8 @@ export default class TwowaySlider extends React.Component {
 
     const leftTracker = new SliderManager(leftToggle, mainSlider);
     const rightTracker = new SliderManager(rightToggle, mainSlider);
+    const minBarTracker = new BarManager(minBar, mainSlider);
+    const maxBarTracker = new BarManager(maxBar, mainSlider);
 
     leftToggle.addEventListener('mousedown', toggleSliding(true, 'left'));
     rightToggle.addEventListener('mousedown', toggleSliding(true, 'right'));
@@ -106,10 +108,12 @@ export default class TwowaySlider extends React.Component {
         if(curDirection === 'left') {
           const offset = leftTracker.getOffset(leftToggle.getBoundingClientRect().left - 20);
           leftTracker.slide(offset)();
+          minBarTracker.slide(maxBarTracker.getPartition(minBar.getBoundingClientRect().left + minBar.offsetWidth - 10))();
         }
         if(curDirection === 'right') {
           const offset = rightTracker.getOffset(rightToggle.getBoundingClientRect().left + 20);
           rightTracker.slide(offset, 'right')();
+          maxBarTracker.slide(maxBarTracker.getPartition(maxBar.getBoundingClientRect().left + maxBar.offsetWidth - 10))();
         }
       }
 
@@ -120,7 +124,6 @@ export default class TwowaySlider extends React.Component {
   componentDidMount() {
     this.handleSlideState();
     this.handleSliderDrag();
-
   }
 
   render() {
