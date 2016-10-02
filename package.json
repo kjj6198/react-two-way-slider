@@ -1,0 +1,12 @@
+{
+  "name": "react-two-way-slider",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Kalan <kjj6198@gmail.com>",
+  "license": "ISC"
+}
