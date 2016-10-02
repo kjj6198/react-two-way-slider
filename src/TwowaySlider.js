@@ -26,6 +26,7 @@ export default class TwowaySlider extends React.Component {
 
     return false;
   }
+
   handleSliderDrag() {
     const {leftToggle, rightToggle, mainSlider } = this.refs;
 
@@ -77,15 +78,27 @@ export default class TwowaySlider extends React.Component {
     const disableSliding = toggleSliding(false);
 
     const leftTracker = new SliderManager(leftToggle, mainSlider);
+    const rightTracker = new SliderManager(rightToggle, mainSlider);
 
     leftToggle.addEventListener('mousedown', toggleSliding(true, 'left'));
     rightToggle.addEventListener('mousedown', toggleSliding(true, 'right'));
     mainSlider.addEventListener('mousedown', toggleSliding(true));
+
     window.addEventListener('mouseup', () => {
-      disableSliding();
+      const { curDirection } = this.state;
+
       if(this.isOverlapped()) {
-        leftTracker.slide(leftToggle.getBoundingClientRect().left - 20, 'left')();
+        if(curDirection === 'left') {
+          const offset = leftTracker.getOffset(leftToggle.getBoundingClientRect().left - 20);
+          leftTracker.slide(offset)();
+        }
+        if(curDirection === 'right') {
+          const offset = rightTracker.getOffset(rightToggle.getBoundingClientRect().left + 20);
+          rightTracker.slide(offset, 'right')();
+        }
       }
+
+      disableSliding();
     });
   }
 
