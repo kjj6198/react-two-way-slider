@@ -11,13 +11,22 @@
   height: 30px;
 }
 
-.slider__main {
+.slider__bg {
   height: 10px;
   top: 50%;
   position: absolute;
   z-index: var(--mainLayer);
   width: 100%;
   background-color: #aaa;
+}
+
+.slider__main {
+  height: 10px;
+  top: 50%;
+  position: absolute;
+  z-index: 9;
+  width: 100%;
+  background-color: transparent;
 
 }
 

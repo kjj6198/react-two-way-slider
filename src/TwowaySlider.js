@@ -9,11 +9,31 @@ export default class TwowaySlider extends React.Component {
   constructor(props) {
     super(props);
 
-    this.handleSliderDrag = this.handleSliderDrag.bind(this);
+    this.handleSliderDragAndClick = this.handleSliderDragAndClick.bind(this);
     this.state = {
       isSliding: false,
       curDirection: '',
+      min: 0,
+      max: 100
     }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return !(nextState.min === this.state.min && nextState.max === this.state.max);
+  }
+
+  componentDidUpdate() {
+    const rawValue = {
+      min: this.props.rawMin,
+      max: this.props.rawMax
+    }
+
+    const scaledValue = {
+      min: this.state.min,
+      max: this.state.max
+    };
+
+    this.props.valueUpdatedFn.call(this, rawValue,  scaledValue);
   }
 
   isOverlapped() {
@@ -28,7 +48,7 @@ export default class TwowaySlider extends React.Component {
     return false;
   }
 
-  handleSliderDrag() {
+  handleSliderDragAndClick() {
     const {
       leftToggle,
       rightToggle,
@@ -43,34 +63,51 @@ export default class TwowaySlider extends React.Component {
     const maxBarTracker = new BarManager(maxBar, mainSlider);
 
     const windowMousemove$ = Observable.fromEvent(window, 'mousemove');
-    const sliderClick$     = Observable.fromEvent(mainSlider, 'click');
+    const sliderClick$     = Observable.fromEvent(mainSlider, 'mousedown');
 
+    const move = (e) => {
+        const { isSliding, curDirection } = this.state;
+        if(isSliding && (curDirection === 'left' || e.direction === 'left')) {
+          const offsetX = leftTracker.getOffset(e.pageX);
+          const parition = minBarTracker.getPartition(e.pageX);
+
+          requestAnimationFrame(leftTracker.slide(offsetX, 'left'));
+          requestAnimationFrame(minBarTracker.slide(parition));
+
+          this.setState({min: parseInt(parition * 100, 10)});
+        } else if(isSliding && (curDirection === 'right' || e.direction === 'right')) {
+          const offsetX = rightTracker.getOffset(e.pageX);
+          const parition = maxBarTracker.getPartition(e.pageX);
+
+          requestAnimationFrame(rightTracker.slide(offsetX, 'right'));
+          requestAnimationFrame(maxBarTracker.slide(parition));
+
+          this.setState({max: parseInt(parition * 100, 10)});
+        }
+
+    };
 
     windowMousemove$
       .merge(sliderClick$)
-      .map(e => e.pageX)
+      .throttle(10)
+      .map(e => {
+        const dLeft = Math.abs(e.pageX - leftToggle.getBoundingClientRect().left + (leftToggle.offsetWidth / 2));
+        const dRight = Math.abs(e.pageX - rightToggle.getBoundingClientRect().left);
+
+        const direction = dLeft <= dRight === true ? 'left' : 'right';
+
+        return {
+          direction,
+          pageX: e.pageX
+        }
+      })
       .filter(() => {
         if (this.isOverlapped()) {
           return false;
         }
         return true;
       })
-      .subscribe(pageX => {
-        const { isSliding, curDirection } = this.state;
-        if(isSliding && curDirection === 'left') {
-          const offsetX = leftTracker.getOffset(pageX);
-          const parition = minBarTracker.getPartition(pageX);
-
-          requestAnimationFrame(leftTracker.slide(offsetX, 'left'));
-          requestAnimationFrame(minBarTracker.slide(parition));
-        } else if(isSliding && curDirection === 'right') {
-          const offsetX = rightTracker.getOffset(pageX);
-          const parition = maxBarTracker.getPartition(pageX);
-
-          requestAnimationFrame(rightTracker.slide(offsetX, 'right'));
-          requestAnimationFrame(maxBarTracker.slide(parition));
-        }
-      });
+      .subscribe(move);
   }
 
   handleSlideState() {
@@ -104,17 +141,31 @@ export default class TwowaySlider extends React.Component {
     window.addEventListener('mouseup', () => {
       const { curDirection } = this.state;
 
+      /* [TODO] this code snippet are highly similiar */
+      const adjustOverlap = (direction = 'left') => {
+        const toggleTrackers = {
+          left: leftTracker,
+          right: rightTracker
+        };
+        const toggles = {
+          left: leftToggle,
+          right: rightToggle
+        };
+        const barTrackers = {
+          left: minBarTracker,
+          right: maxBarTracker
+        };
+
+        const rawOffset = direction === 'right'
+              ? toggles[direction].getBoundingClientRect().left + 25
+              : toggles[direction].getBoundingClientRect().left - 10;
+        const offset = toggleTrackers[direction].getOffset(rawOffset);
+        requestAnimationFrame(toggleTrackers[direction].slide(offset, direction));
+        requestAnimationFrame(barTrackers[direction].slide(barTrackers[direction].getPartition(rawOffset)));
+      }
+
       if(this.isOverlapped()) {
-        if(curDirection === 'left') {
-          const offset = leftTracker.getOffset(leftToggle.getBoundingClientRect().left - 20);
-          leftTracker.slide(offset)();
-          minBarTracker.slide(maxBarTracker.getPartition(minBar.getBoundingClientRect().left + minBar.offsetWidth - 10))();
-        }
-        if(curDirection === 'right') {
-          const offset = rightTracker.getOffset(rightToggle.getBoundingClientRect().left + 20);
-          rightTracker.slide(offset, 'right')();
-          maxBarTracker.slide(maxBarTracker.getPartition(maxBar.getBoundingClientRect().left + maxBar.offsetWidth - 10))();
-        }
+        curDirection && adjustOverlap(curDirection);
       }
 
       disableSliding();
@@ -123,12 +174,13 @@ export default class TwowaySlider extends React.Component {
 
   componentDidMount() {
     this.handleSlideState();
-    this.handleSliderDrag();
+    this.handleSliderDragAndClick();
   }
 
   render() {
     return (
       <div role="slider" className="slider__container">
+        <div ref="mainSlider" className="slider__bg"></div>
         <div ref="mainSlider" className="slider__main"></div>
         <div ref="minBar" className="slider__minBar"></div>
         <div ref="leftToggle" className="slider_toggle left"></div>
@@ -137,4 +189,10 @@ export default class TwowaySlider extends React.Component {
       </div>
     );
   }
+}
+
+TwowaySlider.defaultProps = {
+  rawMin: 0,
+  rawMax: 1000,
+  valueUpdatedFn: function(rawValue, scaledValue) { console.log(rawValue, scaledValue)}
 }
