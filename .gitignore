@@ -1,5 +1,7 @@
 node_modules
-bundle
+bundle/*.json
+
+
 logs
 *.log
 npm-debug.log*
