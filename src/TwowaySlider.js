@@ -20,7 +20,19 @@ export default class TwowaySlider extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return !(nextState.min === this.state.min && nextState.max === this.state.max);
+    return nextState.min !== this.state.min || nextState.max !== this.state.max;
+  }
+
+  componentWillMount() {
+    this.setState({
+      curMin: this.props.curMin,
+      curMax: this.props.curMax
+    });
+  }
+
+  componentDidMount() {
+    this.handleSlideState();
+    this.handleSliderDragAndClick();
   }
 
   componentDidUpdate() {
@@ -39,7 +51,7 @@ export default class TwowaySlider extends React.Component {
 
   isOverlapped() {
     const { leftToggle, rightToggle } = this.refs;
-    const leftToggleRange = leftToggle.getBoundingClientRect().left + leftToggle.offsetWidth;
+    const leftToggleRange  = leftToggle.getBoundingClientRect().left + leftToggle.offsetWidth;
     const rightToggleRange = rightToggle.getBoundingClientRect().left;
 
     if(leftToggleRange >= rightToggleRange) {
@@ -85,7 +97,6 @@ export default class TwowaySlider extends React.Component {
 
           this.setState({max: parseInt(parition * 100, 10)});
         }
-
     };
 
     windowMousemove$
@@ -102,12 +113,7 @@ export default class TwowaySlider extends React.Component {
           pageX: e.pageX
         }
       })
-      .filter(() => {
-        if (this.isOverlapped()) {
-          return false;
-        }
-        return true;
-      })
+      .filter(() => !(this.isOverlapped()))
       .subscribe(move);
   }
 
@@ -130,8 +136,8 @@ export default class TwowaySlider extends React.Component {
 
     const disableSliding = toggleSliding(false);
 
-    const leftTracker = new SliderManager(leftToggle, mainSlider);
-    const rightTracker = new SliderManager(rightToggle, mainSlider);
+    const leftTracker   = new SliderManager(leftToggle, mainSlider);
+    const rightTracker  = new SliderManager(rightToggle, mainSlider);
     const minBarTracker = new BarManager(minBar, mainSlider);
     const maxBarTracker = new BarManager(maxBar, mainSlider);
 
@@ -173,11 +179,6 @@ export default class TwowaySlider extends React.Component {
     });
   }
 
-  componentDidMount() {
-    this.handleSlideState();
-    this.handleSliderDragAndClick();
-  }
-
   render() {
     return (
       <div role="slider" className="slider__container">
@@ -193,6 +194,8 @@ export default class TwowaySlider extends React.Component {
 }
 
 TwowaySlider.defaultProps = {
+  curMin: 0,
+  curMax: 100,
   rawMin: 0,
   rawMax: 1000,
   valueUpdatedFn: function(rawValue, scaledValue) { console.log(rawValue, scaledValue)}
