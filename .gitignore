@@ -1,7 +1,5 @@
 node_modules
 bundle/*.json
-
-
 logs
 *.log
 npm-debug.log*
