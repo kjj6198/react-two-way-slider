@@ -1,40 +1,79 @@
-var path = require("path");
-var webpack = require("webpack");
+const webpack                     = require('webpack');
+const path                        = require('path');
+const merge                       = require('webpack-merge');
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
+const WebpackChunkHash            = require('webpack-chunk-hash');
+const ChunkManifestPlugin         = require('chunk-manifest-webpack-plugin');
+const parts                       = require('./webpack.parts');
 
-module.exports = {
-  devtool: 'cheap-module-eval-source-map',
-  entry: {
-    'renderer': './src/renderer.js'
+
+/* you can seperate entry to another file. */
+const entry = {
+  app: './src/index.js'
+};
+
+const commonConfig = (env) => ({
+  context: __dirname,
+  devtool: env.target === 'development' ? 'cheap-module-eval-source-map' : 'cheap-source-map',
+  resolve: {
+    modules: ['node_modules', './src'],
+    extensions: ['.js'],
+    alias: {
+
+    },
   },
+  entry: entry,
   output: {
     path: path.join(__dirname, 'bundle'),
-    filename: '[name]-bundle.js',
-  },
-  externals: {
-    // require("jquery") is external and available
-    //  on the global var jQuery
-    "jquery": "jQuery"
-  },
-  module: {
-    loaders: [{
-      test: /\.js$/,
-      loaders: ['babel'],
-      include: path.join(__dirname, 'src')
-    }, {
-      test: /\.css$/,
-      loader: "style!css"
-    }]
-  },
-  resolve: {
-    modulesDirectories: ['node_modules', 'src']
-  },
-  plugins: [
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin(),
-    new webpack.DefinePlugin({
-       'process.env': {
-         'NODE_ENV': JSON.stringify('development')
-       }
-     })
-  ]
-};
+    filename: env.target === 'development' ? '[name].bundle.js' : '[name].[chunkhash].js',
+    publicPath: '/bundle/'
+  }
+});
+
+/* eslint consistent-return: 0 */
+module.exports = ({ target }) => {
+  if (typeof target === 'undefined') {
+    target = 'development'; /* eslint no-param-reassign: 0 */
+  }
+
+  switch (target) {
+    case 'development':
+      return merge([
+        commonConfig(target),
+        parts.loadStylesheet(target),
+        parts.devServer(target),
+        parts.loadJavascript(target),
+        parts.setVariable('process.env.NODE_ENV', 'development'),
+        {
+          plugins: [
+            new webpack.NamedModulesPlugin(),
+            new webpack.LoaderOptionsPlugin({ debug: true })
+          ]
+        }
+      ]);
+    case 'production':
+      return merge([
+        commonConfig(target),
+        {
+          plugins: [
+            new webpack.optimize.UglifyJsPlugin(),
+            new webpack.optimize.CommonsChunkPlugin({
+              name: 'vender'
+            }),
+            new webpack.NoEmitOnErrorsPlugin(),
+            new webpack.HashedModuleIdsPlugin(),
+
+            new WebpackChunkHash(),
+            new ChunkManifestPlugin({
+              filename: 'chunk-manifest.json',
+              manifestVariable: 'webpackManifest',
+              inlineManifest: true
+            })
+          ]
+        },
+        parts.loadJavascript(target),
+        parts.setVariable('process.env.NODE_ENV', 'production'),
+        parts.extractStylesheet(target)
+      ]);
+  }
+}

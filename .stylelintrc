@@ -1,0 +1,12 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "declaration-empty-line-before": null,
+    "indentation": 2,
+    "declaration-block-trailing-semicolon": null,
+    "no-eol-whitespace": null,
+    "rule-nested-empty-line-before": null,
+    "block-closing-brace-empty-line-before": null,
+    "no-missing-end-of-source-newline": null
+  }
+}

@@ -1,13 +1,9 @@
-# Two Way Slider
+# react-twoway-slider
 
-Sometimes we need two way slider to handler max and min value more easily. But it seems there are no react library to do that.
+Two way slider component for ReactJS.
 
-I've tried to implement two-way slider using react and Rx. I wish it could be more flexible to use.
 
-## TODO
 
-1. Refactor: the code is not really clear. I'll refactor it after I completed this component and add test suite.
+## License
 
-2. Flexibility:
-
-3. Add test
+MIT
